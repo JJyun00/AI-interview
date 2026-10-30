@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
         model: 'claude-haiku-5-5',
         max_tokens: 200,
         messages: [
-            {role: 'user', content: '너는 신입 개발자 면접관이야. 면접관으로서 면접자에게 첫 인사를 다섯 문장으로 해줘. 그리고 질문으로 끝내줘.'},
+            {role: 'user', content: '너는 신입 개발자 면접관이야. 면접관으로서 면접자에게 첫 인사를 한 문장으로 해줘. 그리고 질문으로 끝내줘.'},
         ],
     })
 
@@ -18,6 +18,18 @@ export default defineEventHandler(async (event) => {
             if (chunk.type === "content_block_delta" && chunk.delta.type === "text_delta") {
                 // process.stdout.write(chunk.delta.text);
                 yield chunk.delta.text // 내부적으로 next(), Promise 처리를 자동화
+            }
+
+            if (chunk.type === "message_delta") {
+                // max_tokens 한도 도달하여 응답이 잘린 경우
+                if (chunk.delta?.stop_reason === "max_tokens") {
+                    console.log("Response was cut off at token limit")
+                }
+
+                // Claude의 응답 거부
+                if (chunk.delta?.stop_reason === "refusal") {
+                    console.log("Claude was unable to process this request")
+                }
             }
         }
     }
